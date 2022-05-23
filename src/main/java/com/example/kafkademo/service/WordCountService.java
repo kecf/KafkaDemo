@@ -22,6 +22,7 @@ public class WordCountService {
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 
+        // Use the builders to define the actual processing topology
         StreamsBuilder builder = new StreamsBuilder();
         KStream<String, String> textLines = builder.stream("streams-plaintext-input");
         KTable<String, Long> wordCounts = textLines
@@ -32,6 +33,5 @@ public class WordCountService {
 
         KafkaStreams streams = new KafkaStreams(builder.build(), props);
         streams.start();
-
     }
 }
