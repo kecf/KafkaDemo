@@ -1,6 +1,8 @@
 package com.example.kafkademo;
 
+import com.example.kafkademo.controller.WebSocketController;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
@@ -21,6 +23,9 @@ import org.springframework.kafka.config.StreamsBuilderFactoryBeanConfigurer;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -33,43 +38,43 @@ public class KafkaDemoApplication {
         SpringApplication.run(KafkaDemoApplication.class, args);
     }
 
-    @Bean
-    public NewTopic newTopic() {
-        return TopicBuilder.name("topic1")
-                .partitions(1)
-                .replicas(1)
-                .build();
-    }
-
-    // define several topics one time
-    // can omit partitions and replicas
-    @Bean
-    public KafkaAdmin.NewTopics newTopics() {
-        return new KafkaAdmin.NewTopics(
-                TopicBuilder.name("topic2")
-                        .build(),
-                TopicBuilder.name("topic3")
-                        .build(),
-                TopicBuilder.name("topic4")
-                        .build()
-        );
-    }
-
-    @KafkaListener(id = "myId3", topics = "topic4")
-    public void listen(String in) {
-        System.out.println(in);
-    }
-
-    @Bean
-    public ApplicationRunner runner(KafkaTemplate<String, String> template) {
-        return args -> {
-            for (int i = 0; i < 20; i++) {
-                template.send("topic2", "key1", "message1 " + i);
-                template.send("topic2", "key2", "message2 " + i);
-                template.send("topic3", "key3", "message3 " + i);
-                template.send("topic3", "key4", "message4 " + i);
-                Thread.sleep(1000);
-            }
-        };
-    }
+//    @Bean
+//    public NewTopic newTopic() {
+//        return TopicBuilder.name("topic1")
+//                .partitions(1)
+//                .replicas(1)
+//                .build();
+//    }
+//
+//    // define several topics one time
+//    // can omit partitions and replicas
+//    @Bean
+//    public KafkaAdmin.NewTopics newTopics() {
+//        return new KafkaAdmin.NewTopics(
+//                TopicBuilder.name("topic2")
+//                        .build(),
+//                TopicBuilder.name("topic3")
+//                        .build(),
+//                TopicBuilder.name("topic4")
+//                        .build()
+//        );
+//    }
+//
+//    @KafkaListener(id = "myId", topics = "topic4")
+//    public void listen(ConsumerRecord<String, Long> record) {
+//        System.out.println("offset: " + record.offset() + " key: " + record.key() + " value: " + record.value());
+//    }
+//
+//    @Bean
+//    public ApplicationRunner runner(KafkaTemplate<String, String> template) {
+//        return args -> {
+//            for (int i = 0; i < 10; i++) {
+//                template.send("topic2", "key1", "message1 " + i);
+//                template.send("topic2", "key2", "message2 " + i);
+//                template.send("topic3", "key3", "message3 " + i);
+//                template.send("topic3", "key4", "message4 " + i);
+//                Thread.sleep(1000);
+//            }
+//        };
+//    }
 }

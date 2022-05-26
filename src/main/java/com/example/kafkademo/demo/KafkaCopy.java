@@ -5,6 +5,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.kstream.Printed;
 
 import java.util.Properties;
 
@@ -18,6 +19,7 @@ public class KafkaCopy {
 
         StreamsBuilder builder = new StreamsBuilder();
         builder.stream("topic2").to("topic4");
+
         final Topology topology = builder.build();
         final KafkaStreams streams = new KafkaStreams(topology, props);
 

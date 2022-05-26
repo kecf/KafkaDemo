@@ -1,5 +1,6 @@
 package com.example.kafkademo;
 
+import com.example.kafkademo.controller.WebSocketController;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,21 +12,15 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 
 import java.io.IOException;
 
-@SpringBootTest
-@EmbeddedKafka(count = 1, ports = {9092})
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class KafkaDemoApplicationTests {
 
     @Autowired
-    private KafkaTemplate<Object, Object> template;
-
-    @KafkaListener(id = "listner1", topics = "test_topic1")
-    void listen(ConsumerRecord<?, ?> record) {
-
-    }
+    WebSocketController webSocketController;
 
     @Test
-    void contextLoads(){
-        template.send("test_topic1", "test_message1");
+    void webSocketSendMessage(){
+        webSocketController.push();
     }
 
 }

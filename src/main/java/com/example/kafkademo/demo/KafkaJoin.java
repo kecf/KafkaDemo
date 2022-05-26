@@ -20,17 +20,20 @@ public class KafkaJoin {
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 
-
         StreamsBuilder builder = new StreamsBuilder();
         KStream<String, String> left = builder.stream("topic2");
         KStream<String, String> right = builder.stream("topic3");
         ValueJoiner<String, String, String> valueJoiner = (leftValue, rightValue) -> leftValue + rightValue;
 
-        KStream<String, String> joined = left.outerJoin(right,
-                valueJoiner,
-                JoinWindows.of(Duration.ofSeconds(2)));
+        left.toTable().outerJoin(right.toTable(), valueJoiner)
+                .toStream()
+                .to("topic4");
 
-        joined.to("topic4");
+//        KStream<String, String> joined = left.outerJoin(right,
+//                valueJoiner,
+//                JoinWindows.of(Duration.ofSeconds(2)));
+//
+//        joined.to("topic4");
 
         final Topology topology = builder.build();
         final KafkaStreams streams = new KafkaStreams(topology, props);

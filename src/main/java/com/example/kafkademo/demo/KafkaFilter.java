@@ -17,7 +17,7 @@ public class KafkaFilter {
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 
         StreamsBuilder builder = new StreamsBuilder();
-        builder.stream("topic1")
+        builder.stream("topic3")
                 .filter((k, v) -> v.toString().contains("0"))
                 .to("topic4");
 
