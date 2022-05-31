@@ -20,7 +20,7 @@ class KafkaDemoApplicationTests {
 
     @Test
     void webSocketSendMessage(){
-        webSocketController.push();
+        webSocketController.pushMessage();
     }
 
 }

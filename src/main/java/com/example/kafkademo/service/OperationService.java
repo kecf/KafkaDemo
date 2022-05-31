@@ -5,7 +5,9 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.kstream.KTable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.server.WebServer;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +15,9 @@ import java.util.Properties;
 
 @Service
 public class OperationService {
+
+    @Autowired
+    WebSocketService webSocketService;
 
     private static final Properties props = new Properties();
 
@@ -32,8 +37,16 @@ public class OperationService {
         streams.start();
     }
 
-    public void join(String[] srcTopics, String tgtTopic) {
+    public void copySend(String srcTopic, String tgtTopic) {
+        StreamsBuilder builder = new StreamsBuilder();
+        KTable<String, String> table = builder.table(srcTopic);
+        webSocketService.sendMessage("kcf", table.toString());
+        table.toStream().to(tgtTopic);
+        final Topology topology = builder.build();
+        final KafkaStreams streams = new KafkaStreams(topology, props);
 
+        streams.start();
     }
+
 
 }

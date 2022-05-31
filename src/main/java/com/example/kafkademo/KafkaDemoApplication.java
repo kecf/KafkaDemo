@@ -1,16 +1,17 @@
 package com.example.kafkademo;
 
 import com.example.kafkademo.controller.WebSocketController;
+import com.example.kafkademo.service.WebSocketService;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Printed;
-import org.apache.kafka.streams.kstream.TimeWindows;
-import org.apache.kafka.streams.kstream.ValueMapper;
+import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -30,9 +31,13 @@ import org.springframework.messaging.handler.annotation.Payload;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 @SpringBootApplication
 public class KafkaDemoApplication {
+
+    @Autowired
+    WebSocketService webSocketService;
 
     public static void main(String[] args) {
         SpringApplication.run(KafkaDemoApplication.class, args);
@@ -60,21 +65,22 @@ public class KafkaDemoApplication {
 //        );
 //    }
 //
-//    @KafkaListener(id = "myId", topics = "topic4")
-//    public void listen(ConsumerRecord<String, Long> record) {
-//        System.out.println("offset: " + record.offset() + " key: " + record.key() + " value: " + record.value());
-//    }
-//
-//    @Bean
-//    public ApplicationRunner runner(KafkaTemplate<String, String> template) {
-//        return args -> {
-//            for (int i = 0; i < 10; i++) {
-//                template.send("topic2", "key1", "message1 " + i);
-//                template.send("topic2", "key2", "message2 " + i);
-//                template.send("topic3", "key3", "message3 " + i);
-//                template.send("topic3", "key4", "message4 " + i);
-//                Thread.sleep(1000);
-//            }
-//        };
-//    }
+    @KafkaListener(groupId = "longValueID", topics = "topic4")
+    public void listen(ConsumerRecord<String, Long> record) {
+        System.out.println("offset: " + record.offset() + " key: " + record.key() + " value: " + record.value());
+//        webSocketService.sendMessage("kcf", record.value());
+    }
+
+    @Bean
+    public ApplicationRunner runner(KafkaTemplate<String, String> template) {
+        return args -> {
+            for (int i = 0; i < 10; i++) {
+                template.send("topic2", "key1", "message1 " + i);
+                template.send("topic2", "key2", "message2 " + i);
+                template.send("topic3", "key3", "message3 " + i);
+                template.send("topic3", "key4", "message4 " + i);
+                Thread.sleep(1000);
+            }
+        };
+    }
 }

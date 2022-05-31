@@ -2,6 +2,8 @@ package com.example.kafkademo.service;
 
 import com.example.kafkademo.model.WebSocketClient;
 import lombok.Data;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.streams.kstream.KTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -18,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Data
 public class WebSocketService {
     private static final Logger log = LoggerFactory.getLogger(WebSocketService.class);
-    //静态变量，用来记录当前在线连接数。应该把它设计成线程安全的。
+    //静态变量，用来记录当前在线连接数
     private static int onlineCount = 0;
     //用来存放每个客户端对应的WebSocketServer对象。
     private static ConcurrentHashMap<String, WebSocketClient> webSocketMap = new ConcurrentHashMap<>();
@@ -65,8 +67,9 @@ public class WebSocketService {
     }
 
     @OnMessage
-    public void onMessage(String message) {
+    public void onMessage(String message) throws IOException {
         log.info("收到用户消息:" + userName + ",报文:" + message);
+        sendMessage("来自后台的反馈：已接收前端数据");
     }
 
     @OnError
@@ -90,6 +93,17 @@ public class WebSocketService {
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public void sendConsumerRecord(String userName, ConsumerRecord<String, String> record) {
+        try {
+            WebSocketClient webSocketClient = webSocketMap.get(userName);
+            if(webSocketClient!=null){
+                webSocketClient.getSession().getBasicRemote().sendObject(record);
+            }
+        } catch (EncodeException | IOException e) {
+            e.printStackTrace();
         }
     }
 

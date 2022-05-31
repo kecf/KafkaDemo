@@ -18,22 +18,18 @@ public class WordCount {
         Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "wordcount");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.Long().getClass());
 
         StreamsBuilder builder = new StreamsBuilder();
 
-        KStream<String, String> stream = builder
-                .stream("topic3", Consumed.with(Serdes.String(), Serdes.String()))
-                .flatMapValues(value -> Arrays.asList(value.toLowerCase().split(" ")));
-
-        stream.print(Printed.toSysOut());
-
-        KStream<String, Long> countStream = stream
+        builder.stream("topic3", Consumed.with(Serdes.String(), Serdes.String()))
+                .flatMapValues(value -> Arrays.asList(value.toLowerCase().split(" ")))
                 .groupBy((key, word) -> word, Grouped.with(Serdes.String(), Serdes.String()))
                 .count()
-                .toStream();
-
-        countStream.print(Printed.toSysOut());
-        countStream.to("topic4", Produced.with(Serdes.String(), Serdes.Long()));
+                .toStream()
+                .to("topic4");
 
         final Topology topology = builder.build();
         final KafkaStreams streams = new KafkaStreams(topology, props);

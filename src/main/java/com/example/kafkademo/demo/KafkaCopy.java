@@ -18,7 +18,7 @@ public class KafkaCopy {
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 
         StreamsBuilder builder = new StreamsBuilder();
-        builder.stream("topic2").to("topic4");
+        builder.stream("topic3").to("topic4");
 
         final Topology topology = builder.build();
         final KafkaStreams streams = new KafkaStreams(topology, props);
