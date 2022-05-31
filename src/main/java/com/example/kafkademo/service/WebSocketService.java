@@ -96,17 +96,6 @@ public class WebSocketService {
         }
     }
 
-    public void sendConsumerRecord(String userName, ConsumerRecord<String, String> record) {
-        try {
-            WebSocketClient webSocketClient = webSocketMap.get(userName);
-            if(webSocketClient!=null){
-                webSocketClient.getSession().getBasicRemote().sendObject(record);
-            }
-        } catch (EncodeException | IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public synchronized int getOnlineCount() {
         return onlineCount;
     }

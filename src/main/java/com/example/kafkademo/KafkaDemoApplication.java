@@ -65,7 +65,7 @@ public class KafkaDemoApplication {
 //        );
 //    }
 //
-    @KafkaListener(groupId = "longValueID", topics = "topic4")
+    @KafkaListener(groupId = "LongValueID", topics = "topic4")
     public void listen(ConsumerRecord<String, Long> record) {
         System.out.println("offset: " + record.offset() + " key: " + record.key() + " value: " + record.value());
 //        webSocketService.sendMessage("kcf", record.value());
