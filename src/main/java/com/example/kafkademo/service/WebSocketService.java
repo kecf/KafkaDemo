@@ -1,6 +1,9 @@
 package com.example.kafkademo.service;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.example.kafkademo.model.WebSocketClient;
+import com.fasterxml.jackson.databind.util.JSONPObject;
 import lombok.Data;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.streams.kstream.KTable;
@@ -89,6 +92,21 @@ public class WebSocketService {
             WebSocketClient webSocketClient = webSocketMap.get(userName);
             if(webSocketClient!=null){
                 webSocketClient.getSession().getBasicRemote().sendText(message);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public <V> void sendJson(String userName, String key, V value) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(key, value);
+        String jsonString = JSON.toJSONString(jsonObject);
+        try {
+            WebSocketClient webSocketClient = webSocketMap.get(userName);
+            if(webSocketClient!=null){
+                webSocketClient.getSession().getBasicRemote().sendText(jsonString);
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -64,23 +64,23 @@ public class KafkaDemoApplication {
 //                        .build()
 //        );
 //    }
-//
+
     @KafkaListener(groupId = "LongValueID", topics = "topic4")
     public void listen(ConsumerRecord<String, Long> record) {
         System.out.println("offset: " + record.offset() + " key: " + record.key() + " value: " + record.value());
-//        webSocketService.sendMessage("kcf", record.value());
+        webSocketService.sendJson("kcf", record.key(), record.value());
     }
 
-    @Bean
-    public ApplicationRunner runner(KafkaTemplate<String, String> template) {
-        return args -> {
-            for (int i = 0; i < 10; i++) {
-                template.send("topic2", "key1", "message1 " + i);
-                template.send("topic2", "key2", "message2 " + i);
-                template.send("topic3", "key3", "message3 " + i);
-                template.send("topic3", "key4", "message4 " + i);
-                Thread.sleep(1000);
-            }
-        };
-    }
+//    @Bean
+//    public ApplicationRunner runner(KafkaTemplate<String, String> template) {
+//        return args -> {
+//            for (int i = 0; i < 10; i++) {
+//                template.send("topic2", "key1", "message1 " + i);
+//                template.send("topic2", "key2", "message2 " + i);
+//                template.send("topic3", "key3", "message3 " + i);
+//                template.send("topic3", "key4", "message4 " + i);
+//                Thread.sleep(1000);
+//            }
+//        };
+//    }
 }
