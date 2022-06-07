@@ -1,6 +1,8 @@
 package com.example.kafkademo;
 
+import com.alibaba.fastjson.JSONObject;
 import com.example.kafkademo.controller.WebSocketController;
+import com.example.kafkademo.data.EventData;
 import com.example.kafkademo.service.WebSocketService;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -51,36 +53,36 @@ public class KafkaDemoApplication {
 //                .build();
 //    }
 //
-//    // define several topics one time
-//    // can omit partitions and replicas
-//    @Bean
-//    public KafkaAdmin.NewTopics newTopics() {
-//        return new KafkaAdmin.NewTopics(
-//                TopicBuilder.name("topic2")
-//                        .build(),
-//                TopicBuilder.name("topic3")
-//                        .build(),
-//                TopicBuilder.name("topic4")
-//                        .build()
-//        );
-//    }
-
-    @KafkaListener(groupId = "LongValueID", topics = "topic4")
-    public void listen(ConsumerRecord<String, Long> record) {
-        System.out.println("offset: " + record.offset() + " key: " + record.key() + " value: " + record.value());
-        webSocketService.sendJson("kcf", record.key(), record.value());
+    // define several topics one time
+    // can omit partitions and replicas
+    @Bean
+    public KafkaAdmin.NewTopics newTopics() {
+        return new KafkaAdmin.NewTopics(
+                TopicBuilder.name("topic2")
+                        .build(),
+                TopicBuilder.name("topic3")
+                        .build(),
+                TopicBuilder.name("topic4")
+                        .build(),
+                TopicBuilder.name("topic5")
+                        .build()
+        );
     }
 
-//    @Bean
-//    public ApplicationRunner runner(KafkaTemplate<String, String> template) {
-//        return args -> {
-//            for (int i = 0; i < 10; i++) {
-//                template.send("topic2", "key1", "message1 " + i);
-//                template.send("topic2", "key2", "message2 " + i);
-//                template.send("topic3", "key3", "message3 " + i);
-//                template.send("topic3", "key4", "message4 " + i);
-//                Thread.sleep(1000);
-//            }
-//        };
-//    }
+    @KafkaListener(topics = {"topic3", "topic4"})
+    public void listen(ConsumerRecord<String, String> record) {
+        System.out.println("offset: " + record.offset() + " topic: " + record.topic() + " key: " + record.key() + " value: " + record.value());
+//        webSocketService.sendJson("kcf", record.key(), record.value());
+//        webSocketService.sendMessage("kcf", record.value());
+    }
+
+    @Bean
+    public ApplicationRunner runner(KafkaTemplate<String, String> template) {
+        return args -> {
+            for (JSONObject jsonObject : EventData.events) {
+                template.send("topic2", jsonObject.getString("eventId"), jsonObject.toJSONString());
+                Thread.sleep(1000);
+            }
+        };
+    }
 }
