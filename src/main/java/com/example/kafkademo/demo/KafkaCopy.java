@@ -5,6 +5,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Printed;
 
 import java.util.Properties;
@@ -18,7 +19,8 @@ public class KafkaCopy {
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 
         StreamsBuilder builder = new StreamsBuilder();
-        builder.stream("topic3").to("topic4");
+        builder.table("topic2", Consumed.with(Topology.AutoOffsetReset.LATEST)).toStream().to("topic4");
+//        builder.stream("topic2", Consumed.with(Topology.AutoOffsetReset.LATEST)).toTable().toStream().to("topic4");
 
         final Topology topology = builder.build();
         final KafkaStreams streams = new KafkaStreams(topology, props);

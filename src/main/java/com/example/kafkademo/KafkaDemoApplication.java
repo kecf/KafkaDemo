@@ -55,32 +55,33 @@ public class KafkaDemoApplication {
 //
     // define several topics one time
     // can omit partitions and replicas
-    @Bean
-    public KafkaAdmin.NewTopics newTopics() {
-        return new KafkaAdmin.NewTopics(
-                TopicBuilder.name("topic2")
-                        .build(),
-                TopicBuilder.name("topic3")
-                        .build(),
-                TopicBuilder.name("topic4")
-                        .build(),
-                TopicBuilder.name("topic5")
-                        .build()
-        );
-    }
+//    @Bean
+//    public KafkaAdmin.NewTopics newTopics() {
+//        return new KafkaAdmin.NewTopics(
+//                TopicBuilder.name("topic2")
+//                        .build(),
+//                TopicBuilder.name("topic3")
+//                        .build(),
+//                TopicBuilder.name("topic4")
+//                        .build(),
+//                TopicBuilder.name("topic5")
+//                        .build()
+//        );
+//    }
 
-    @KafkaListener(topics = {"topic3", "topic4"})
+    @KafkaListener(groupId = "StringValueID", topics = {"topic3", "topic4", "topic5"})
     public void listen(ConsumerRecord<String, String> record) {
         System.out.println("offset: " + record.offset() + " topic: " + record.topic() + " key: " + record.key() + " value: " + record.value());
 //        webSocketService.sendJson("kcf", record.key(), record.value());
-//        webSocketService.sendMessage("kcf", record.value());
+        webSocketService.sendMessage("kcf", record.value());
     }
 
     @Bean
     public ApplicationRunner runner(KafkaTemplate<String, String> template) {
         return args -> {
             for (JSONObject jsonObject : EventData.events) {
-                template.send("topic2", jsonObject.getString("eventId"), jsonObject.toJSONString());
+                template.send("topic2", jsonObject.getString("signalName"), jsonObject.toJSONString());
+                System.out.println("----------------------");
                 Thread.sleep(1000);
             }
         };

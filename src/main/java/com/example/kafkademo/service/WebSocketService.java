@@ -90,7 +90,7 @@ public class WebSocketService {
     public void sendMessage(String userName, String message) {
         try {
             WebSocketClient webSocketClient = webSocketMap.get(userName);
-            if(webSocketClient!=null){
+            if(webSocketClient!=null && message != "null"){
                 webSocketClient.getSession().getBasicRemote().sendText(message);
             }
         } catch (IOException e) {
