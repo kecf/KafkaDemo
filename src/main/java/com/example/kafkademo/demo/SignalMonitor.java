@@ -13,6 +13,7 @@ import org.apache.kafka.streams.kstream.KTable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Properties;
 
 public class SignalMonitor {
@@ -21,7 +22,7 @@ public class SignalMonitor {
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "signalMonitor");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
-//        props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1000);
+        props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1000);
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -41,7 +42,7 @@ public class SignalMonitor {
         })
                 .mapValues((value) -> {
                     JSONObject jsonObject = JSONObject.parseObject(value);
-                    jsonObject.put("type", "topic3");
+                    jsonObject.put("type", "prevDay");
                     return jsonObject.toJSONString();
                 })
                 .toTable();
@@ -59,21 +60,32 @@ public class SignalMonitor {
         })
                 .mapValues((value) -> {
                     JSONObject jsonObject = JSONObject.parseObject(value);
-                    jsonObject.put("type", "topic4");
+                    jsonObject.put("type", "today");
                     return jsonObject.toJSONString();
                 })
                 .toTable();
         tableToday.toStream().to("topic4");
 
-        // leftjoin得到昨天有的，filter出今天没有的
+        // leftjoin得到昨天有的，mapvalues分为3类
         KTable<String, String> table = tablePrevDay.leftJoin(tableToday, (prevDay, today) -> prevDay + "----" + today);
-        table.filter((key, value) -> value.contains("null"))
-                .mapValues((value) -> {
-                    JSONObject jsonObject = JSONObject.parseObject(value.split("----")[0]);
-                    jsonObject.put("type", "topic5");
-                    return jsonObject.toJSONString();
-                })
-                .toStream().to("topic5");
+        table.mapValues((value) -> {
+            JSONObject jsonPrevDay = JSONObject.parseObject(value.split("----")[0]);
+            if (Objects.equals(value.split("----")[1], "null")) {
+                jsonPrevDay.put("type", "error");
+            } else {
+                JSONObject jsonToday = JSONObject.parseObject(value.split("----")[1]);
+                try {
+                    Date timePrevDay = formatter.parse(jsonPrevDay.getString("eventTime"));
+                    Date timeToday = formatter.parse(jsonToday.getString("eventTime"));
+                    String type = timeToday.getTime() > timePrevDay.getTime() + 24*60*60*1000 + 60*1000 ? "late" : "normal";
+                    jsonPrevDay.put("type", type);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+            return jsonPrevDay.toJSONString();
+        }).toStream().to("topic5");
+
 
         final Topology topology = builder.build();
         final KafkaStreams streams = new KafkaStreams(topology, props);

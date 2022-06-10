@@ -11,12 +11,12 @@ public class EventData {
     public static final List<JSONObject> events;
     static {
         events = new ArrayList<>();
-        events.add(JSONObject.parseObject("{\"eventId\":1001,\"eventTime\":\"2022-06-07 09:00:00\",\"signalName\":\"signal1\",\"eventSource\":\"kcf\"}"));
-        events.add(JSONObject.parseObject("{\"eventId\":1002,\"eventTime\":\"2022-06-08 09:00:00\",\"signalName\":\"signal1\",\"eventSource\":\"kcf\"}"));
-        events.add(JSONObject.parseObject("{\"eventId\":1003,\"eventTime\":\"2022-06-08 09:03:00\",\"signalName\":\"signal2\",\"eventSource\":\"kcf\"}"));
-        events.add(JSONObject.parseObject("{\"eventId\":1004,\"eventTime\":\"2022-06-08 09:04:05\",\"signalName\":\"signal3\",\"eventSource\":\"kcf\"}"));
-        events.add(JSONObject.parseObject("{\"eventId\":1005,\"eventTime\":\"2022-06-09 09:04:10\",\"signalName\":\"signal1\",\"eventSource\":\"kcf\"}"));
-        events.add(JSONObject.parseObject("{\"eventId\":1006,\"eventTime\":\"2022-06-09 10:05:01\",\"signalName\":\"signal3\",\"eventSource\":\"kcf\"}"));
+        events.add(JSONObject.parseObject("{\"eventId\":1001,\"eventTime\":\"2022-06-08 09:00:00\",\"signalName\":\"signal1\",\"eventSource\":\"kcf\"}"));
+        events.add(JSONObject.parseObject("{\"eventId\":1002,\"eventTime\":\"2022-06-09 09:02:00\",\"signalName\":\"signal1\",\"eventSource\":\"kcf\"}"));
+        events.add(JSONObject.parseObject("{\"eventId\":1003,\"eventTime\":\"2022-06-09 09:03:00\",\"signalName\":\"signal2\",\"eventSource\":\"kcf\"}"));
+        events.add(JSONObject.parseObject("{\"eventId\":1004,\"eventTime\":\"2022-06-09 09:04:00\",\"signalName\":\"signal3\",\"eventSource\":\"kcf\"}"));
+        events.add(JSONObject.parseObject("{\"eventId\":1005,\"eventTime\":\"2022-06-10 09:02:00\",\"signalName\":\"signal1\",\"eventSource\":\"kcf\"}"));
+        events.add(JSONObject.parseObject("{\"eventId\":1006,\"eventTime\":\"2022-06-10 09:10:01\",\"signalName\":\"signal3\",\"eventSource\":\"kcf\"}"));
     }
 
     public static List<JSONObject> getEvents() {

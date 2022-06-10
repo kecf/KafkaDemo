@@ -72,7 +72,6 @@ public class KafkaDemoApplication {
     @KafkaListener(groupId = "StringValueID", topics = {"topic3", "topic4", "topic5"})
     public void listen(ConsumerRecord<String, String> record) {
         System.out.println("offset: " + record.offset() + " topic: " + record.topic() + " key: " + record.key() + " value: " + record.value());
-//        webSocketService.sendJson("kcf", record.key(), record.value());
         webSocketService.sendMessage("kcf", record.value());
     }
 

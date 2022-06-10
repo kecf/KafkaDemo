@@ -16,6 +16,7 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @ServerEndpoint(value = "/websocket/{userName}")
@@ -90,7 +91,7 @@ public class WebSocketService {
     public void sendMessage(String userName, String message) {
         try {
             WebSocketClient webSocketClient = webSocketMap.get(userName);
-            if(webSocketClient!=null && message != "null"){
+            if(webSocketClient!=null && !Objects.equals(message, "null")){
                 webSocketClient.getSession().getBasicRemote().sendText(message);
             }
         } catch (IOException e) {
