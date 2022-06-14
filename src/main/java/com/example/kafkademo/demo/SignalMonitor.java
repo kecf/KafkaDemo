@@ -9,6 +9,7 @@ import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Printed;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -71,12 +72,24 @@ public class SignalMonitor {
         table.mapValues((value) -> {
             JSONObject jsonPrevDay = JSONObject.parseObject(value.split("----")[0]);
             if (Objects.equals(value.split("----")[1], "null")) {
-                jsonPrevDay.put("type", "error");
+                // 1. 如果table1有，table2没有，且当前时间大于table1中对应信号的时间，则type设为error
+                try {
+                    Date timePrevDay = formatter.parse(jsonPrevDay.getString("eventTime"));
+                    if (timePrevDay.getTime() < new Date().getTime() - 60*1000) {
+                        jsonPrevDay.put("type", "error");
+                    } else {
+                        jsonPrevDay.put("type", "tbd");
+                    }
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
             } else {
                 JSONObject jsonToday = JSONObject.parseObject(value.split("----")[1]);
                 try {
                     Date timePrevDay = formatter.parse(jsonPrevDay.getString("eventTime"));
                     Date timeToday = formatter.parse(jsonToday.getString("eventTime"));
+                    // 2. 如果table1、2中都有，且table2时间晚于table1时间1分钟，则type设为late
+                    // 3. 其他情况，type设为normal
                     String type = timeToday.getTime() > timePrevDay.getTime() + 24*60*60*1000 + 60*1000 ? "late" : "normal";
                     jsonPrevDay.put("type", type);
                 } catch (ParseException e) {
