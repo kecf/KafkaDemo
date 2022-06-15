@@ -2,7 +2,8 @@ package com.example.kafkademo;
 
 import com.alibaba.fastjson.JSONObject;
 import com.example.kafkademo.controller.WebSocketController;
-import com.example.kafkademo.data.EventData;
+import com.example.kafkademo.data.PositionData;
+import com.example.kafkademo.data.SignalData;
 import com.example.kafkademo.service.WebSocketService;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -55,19 +56,25 @@ public class KafkaDemoApplication {
 //
     // define several topics one time
     // can omit partitions and replicas
-//    @Bean
-//    public KafkaAdmin.NewTopics newTopics() {
-//        return new KafkaAdmin.NewTopics(
-//                TopicBuilder.name("topic2")
-//                        .build(),
-//                TopicBuilder.name("topic3")
-//                        .build(),
-//                TopicBuilder.name("topic4")
-//                        .build(),
-//                TopicBuilder.name("topic5")
-//                        .build()
-//        );
-//    }
+    @Bean
+    public KafkaAdmin.NewTopics newTopics() {
+        return new KafkaAdmin.NewTopics(
+                TopicBuilder.name("topic2")
+                        .build(),
+                TopicBuilder.name("topic3")
+                        .build(),
+                TopicBuilder.name("topic4")
+                        .build(),
+                TopicBuilder.name("topic5")
+                        .build(),
+                TopicBuilder.name("positionPlan")
+                        .build(),
+                TopicBuilder.name("positionActual")
+                        .build(),
+                TopicBuilder.name("heartbeat")
+                        .build()
+        );
+    }
 
     @KafkaListener(groupId = "StringValueID", topics = {"topic3", "topic4", "topic5"})
     public void listen(ConsumerRecord<String, String> record) {
@@ -78,8 +85,13 @@ public class KafkaDemoApplication {
     @Bean
     public ApplicationRunner runner(KafkaTemplate<String, String> template) {
         return args -> {
-            for (JSONObject jsonObject : EventData.events) {
-                template.send("topic2", jsonObject.getString("signalName"), jsonObject.toJSONString());
+//            for (JSONObject jsonObject : SignalData.events) {
+//                template.send("topic2", jsonObject.getString("signalName"), jsonObject.toJSONString());
+//                System.out.println("----------------------");
+//                Thread.sleep(1000);
+//            }
+            for (JSONObject jsonObject : PositionData.heartbeats) {
+                template.send("heartbeat", "heartbeat", jsonObject.getString("eventTime"));
                 System.out.println("----------------------");
                 Thread.sleep(1000);
             }
