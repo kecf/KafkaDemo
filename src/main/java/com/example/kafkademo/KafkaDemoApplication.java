@@ -34,6 +34,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 @SpringBootApplication
@@ -56,42 +57,42 @@ public class KafkaDemoApplication {
 //
     // define several topics one time
     // can omit partitions and replicas
-    @Bean
-    public KafkaAdmin.NewTopics newTopics() {
-        return new KafkaAdmin.NewTopics(
-                TopicBuilder.name("topic2")
-                        .build(),
-                TopicBuilder.name("topic3")
-                        .build(),
-                TopicBuilder.name("topic4")
-                        .build(),
-                TopicBuilder.name("topic5")
-                        .build(),
-                TopicBuilder.name("positionPlan")
-                        .build(),
-                TopicBuilder.name("positionActual")
-                        .build(),
-                TopicBuilder.name("heartbeat")
-                        .build()
-        );
-    }
+//    @Bean
+//    public KafkaAdmin.NewTopics newTopics() {
+//        return new KafkaAdmin.NewTopics(
+//                TopicBuilder.name("topic2")
+//                        .build(),
+//                TopicBuilder.name("topic3")
+//                        .build(),
+//                TopicBuilder.name("topic4")
+//                        .build(),
+//                TopicBuilder.name("topic5")
+//                        .build(),
+//                TopicBuilder.name("positionPlan")
+//                        .build(),
+//                TopicBuilder.name("positionActual")
+//                        .build(),
+//                TopicBuilder.name("heartbeat")
+//                        .build()
+//        );
+//    }
 
-    @KafkaListener(groupId = "StringValueID", topics = {"topic3", "topic4", "topic5"})
+    @KafkaListener(groupId = "StringValueID", topics = {"heartbeat", "topic3", "topic4", "topic5"})
     public void listen(ConsumerRecord<String, String> record) {
-        System.out.println("offset: " + record.offset() + " topic: " + record.topic() + " key: " + record.key() + " value: " + record.value());
+        if (Objects.equals(record.topic(), "heartbeat")) {
+            System.out.println(JSONObject.parseObject(record.value()).getString("eventTime"));
+            webSocketService.sendMessage("kcf", record.value());
+        } else {
+            System.out.println("offset: " + record.offset() + " topic: " + record.topic() + " key: " + record.key() + " value: " + record.value());
+        }
         webSocketService.sendMessage("kcf", record.value());
     }
 
     @Bean
     public ApplicationRunner runner(KafkaTemplate<String, String> template) {
         return args -> {
-//            for (JSONObject jsonObject : SignalData.events) {
-//                template.send("topic2", jsonObject.getString("signalName"), jsonObject.toJSONString());
-//                System.out.println("----------------------");
-//                Thread.sleep(1000);
-//            }
-            for (JSONObject jsonObject : PositionData.heartbeats) {
-                template.send("heartbeat", "heartbeat", jsonObject.getString("eventTime"));
+            for (JSONObject jsonObject : PositionData.actualPosition) {
+                template.send("topic2", jsonObject.getString("positionName"), jsonObject.toJSONString());
                 System.out.println("----------------------");
                 Thread.sleep(1000);
             }

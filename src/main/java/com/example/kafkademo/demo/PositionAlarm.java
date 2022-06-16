@@ -4,10 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.example.kafkademo.data.PositionData;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
-import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KTable;
-import org.apache.kafka.streams.kstream.KeyValueMapper;
+import org.apache.kafka.streams.kstream.*;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -29,33 +26,64 @@ public class PositionAlarm {
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 
         StreamsBuilder builder = new StreamsBuilder();
+        KStream<String, String> stream = builder.stream("topic2", Consumed.with(Topology.AutoOffsetReset.LATEST));
+        KStream<String, String> streamHeartbeat = stream.filter((key, value) -> Objects.equals(key, "heartbeat"));
+        KTable<String, String> tableActual = stream.filter((key, value) -> !Objects.equals(key, "heartbeat")).toTable();
 
-        KTable<String, String> tableActual = builder.table("positionActual", Consumed.with(Topology.AutoOffsetReset.LATEST));
-        KStream<String, String> tableHeartbeat = builder.stream("heartbeat", Consumed.with(Topology.AutoOffsetReset.LATEST));
+        // 1. 根据心跳信号，与计划仓位生成表进行对比，得到预期超时仓位数据：超时1分钟以上、超时4分钟以上、超时7分钟以上
+        KTable<String, String> suspectedTemp = streamHeartbeat.flatMap(keyValueMapper(1, 4)).toTable();
+        KTable<String, String> warningTemp = streamHeartbeat.flatMap(keyValueMapper(4, 7)).toTable();
+        KTable<String, String> errorTemp = streamHeartbeat.flatMap(keyValueMapper(7, 100000)).toTable();
 
-        // 1. 根据心跳信号，与计划仓位生成表进行对比，得到超时仓位数据：超时3分钟以内、超时3分钟以上、超时6分钟以上
-        KTable<String, String> suspected = tableHeartbeat.flatMap(keyValueMapper(0)).toTable();
-        KTable<String, String> warning = tableHeartbeat.flatMap(keyValueMapper(3)).toTable();
-        KTable<String, String> error = tableHeartbeat.flatMap(keyValueMapper(6)).toTable();
+        // 2. 将超时仓位和已生成仓位进行join，得到实际超时仓位
+        //TODO: 把下面的重复代码整合为一个方法
+        KTable<String, String> suspected = suspectedTemp.leftJoin(tableActual, (v1, v2) -> v1 + "----" + v2)
+                .toStream()
+                .filter((key, value) -> value.contains("null"))
+                .toTable()
+                .mapValues((value) -> {
+                    JSONObject jsonObject = JSONObject.parseObject(value.split("----")[0]);
+                    jsonObject.put("type", "suspected");
+                    return jsonObject.toJSONString();
+                });
+        KTable<String, String> warning = warningTemp.leftJoin(tableActual, (v1, v2) -> v1 + "----" + v2)
+                .toStream()
+                .filter((key, value) -> value.contains("null"))
+                .toTable()
+                .mapValues((value) -> {
+                    JSONObject jsonObject = JSONObject.parseObject(value.split("----")[0]);
+                    jsonObject.put("type", "warning");
+                    return jsonObject.toJSONString();
+                });
+        KTable<String, String> error = errorTemp.leftJoin(tableActual, (v1, v2) -> v1 + "----" + v2)
+                .toStream()
+                .filter((key, value) -> value.contains("null"))
+                .toTable()
+                .mapValues((value) -> {
+                    JSONObject jsonObject = JSONObject.parseObject(value.split("----")[0]);
+                    jsonObject.put("type", "error");
+                    return jsonObject.toJSONString();
+                });
+
+        // 3. 将三个table发给对应的topic
+        streamHeartbeat.to("heartbeat");
         suspected.toStream().to("topic3");
         warning.toStream().to("topic4");
         error.toStream().to("topic5");
-
-        // 2.
 
         final Topology topology = builder.build();
         final KafkaStreams streams = new KafkaStreams(topology, props);
         streams.start();
     }
 
-    public static KeyValueMapper<String, String, Iterable<KeyValue<String, String>>> keyValueMapper(long minutes) {
-        return (key, eventTime) -> {
+    public static KeyValueMapper<String, String, Iterable<KeyValue<String, String>>> keyValueMapper(long from, long to) {
+        return (key, heartbeat) -> {
             List<KeyValue<String, String>> rst = new ArrayList<>();
             for (JSONObject position : planedPosition) {
                 try {
                     Date positionTime = formatter.parse(position.getString("eventTime"));
-                    Date heartbeatTime = formatter.parse(eventTime);
-                    if (positionTime.getTime() <= heartbeatTime.getTime() + minutes * 1000) {
+                    Date heartbeatTime = formatter.parse(JSONObject.parseObject(heartbeat).getString("eventTime"));
+                    if (positionTime.getTime() + from * 60 * 1000 <= heartbeatTime.getTime() && heartbeatTime.getTime() < positionTime.getTime() + to * 60 * 1000) {
                         rst.add(new KeyValue<>(position.getString("positionName"), position.toJSONString()));
                     }
                 } catch (ParseException e) {
